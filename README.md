@@ -1,2 +1,2 @@
 # IaCLabPortfolio
-IaC continuous assessment lap repo
+IaC continuous assessment lab repo
