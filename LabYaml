@@ -1,0 +1,144 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: This is a template for the IaC lab1 VPC
+
+#Metadata:
+
+
+Parameters:
+  VpcCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: Add VPC CIDR please.
+  
+  SubnetCIDR:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Add CIDR for subnet please.
+
+  privateSubnetCIDR:
+    Type: String
+    Default: 10.192.20.0/24
+    Description: Add CIRD for a private subnet please.
+
+Resources:
+#Creating VPC
+  labVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 
+        Ref: VpcCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+       - Key: Name
+         Value: labVPC
+
+#Adding internet gateway
+  labInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: labInternetGateway
+  
+  #Attaching internet gateway to the VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: labVPC
+      InternetGatewayId:
+        Ref: labInternetGateway
+  
+  #Creating a public subnet for the VPC - Ireland
+  labPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: 
+        Ref: labVPC
+      CidrBlock: 
+        Ref: SubnetCIDR
+      AvailabilityZone: "eu-west-1a"
+      Tags:
+      - Key: Name
+        Value: labPublicSubnet
+
+  #Creating routing table for the public subnet
+  labPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        Ref: labVPC
+      Tags:
+      - Key: Name
+        Value: labPublicRouteTable
+
+  #Adding a public route to the public route table
+  labPublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+       RouteTableId:
+         Ref: labPublicRouteTable
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId:
+         Ref: labInternetGateway
+
+  #Associate the public subnets with the routing table
+  labPublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: labPublicSubnet
+      RouteTableId:
+        Ref: labPublicRouteTable
+
+  #Creating an instance security group
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      VpcId: 
+        Ref: labVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  #Creating a private subnet for the VPC - Ireland
+  labPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: 
+        Ref: labVPC
+      CidrBlock: 
+        Ref: PrivateSubnetCIDR
+      AvailabilityZone: "eu-west-1a"
+      Tags:
+      - Key: Name
+        Value: labPrivateSubnet
+
+  #Creating routing table for the private subnet
+  labPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        Ref: labVPC
+      Tags:
+      - Key: Name
+        Value: labPrivateRouteTable
+
+  #Associate the public subnets with the routing table
+  labPrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: labPrivateSubnet
+      RouteTableId:
+        Ref: labPrivateRouteTable
