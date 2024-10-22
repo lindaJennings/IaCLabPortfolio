@@ -10,17 +10,37 @@ Parameters:
   VpcCIDR:
     Type: String
     Default: 10.0.0.0/16
-    Description: Add VPC CIDR please.
+    Description: VPC CIDR.
   
   SubnetCIDR:
     Type: String
     Default: 10.0.1.0/24
-    Description: Add CIDR for subnet please.
+    Description: CIDR for public subnet.
 
-  privateSubnetCIDR:
+  PrivateSubnetCIDR:
     Type: String
-    Default: 10.192.20.0/24
-    Description: Add CIRD for a private subnet please.
+    Default: 10.0.2.0/24
+    Description: CIRD for a private subnet.
+  
+  ImageId:
+    Type: String
+    Default: ami-054a53dca63de757b
+    Description: Linux AMI for Ireland eu-west-1a region
+  
+  InstanceTypePublic:
+    Type: String
+    Default: t2.micro
+    Description: EC2 instance for the public subnet.
+
+  InstanceTypePrivate:
+    Type: String
+    Default: t2.micro
+    Description: EC2 instance for the private subnet.
+  
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: labkeypair
+    Description: SSH Keypair to login to the instance
 
 Resources:
 #Creating VPC
@@ -29,8 +49,8 @@ Resources:
     Properties:
       CidrBlock: 
         Ref: VpcCIDR
-      EnableDnsSupport: 'true'
-      EnableDnsHostnames: 'true'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
       Tags:
        - Key: Name
          Value: labVPC
@@ -142,3 +162,57 @@ Resources:
         Ref: labPrivateSubnet
       RouteTableId:
         Ref: labPrivateRouteTable
+  
+  #Creating a Security Group for the public EC2 instance
+  labPublicInstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access to the public instance
+      VpcId: 
+        Ref: labVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  #Creating a Security Group for the private EC2 instance
+  labPrivateInstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access from public instance
+      VpcId: 
+        Ref: labVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: 
+            Ref: labPublicInstanceSG
+
+  #Adding an EC2 instance in the public subnet
+  labPublicInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: 
+        Ref: InstanceTypePublic
+      ImageId: 
+        Ref: ImageId
+      KeyName: 
+        Ref: KeyName
+      SubnetId: 
+        Ref: labPublicSubnet
+
+  #Adding an EC2 instance in the private subnet
+  PrivateInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: 
+        Ref: InstanceTypePrivate
+      ImageId: 
+        Ref: ImageId
+      KeyName: 
+        Ref: KeyName
+      SubnetId: 
+        Ref: labPrivateSubnet
+
