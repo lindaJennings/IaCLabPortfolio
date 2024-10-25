@@ -3,9 +3,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: This is a template for the IaC lab1 VPC
 
-#Metadata:
-
-
 Parameters:
   VpcCIDR:
     Type: String
@@ -104,7 +101,7 @@ Resources:
        GatewayId:
          Ref: labInternetGateway
 
-  #Associate the public subnets with the routing table
+  #Associate the public subnet with the routing table
   labPublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -113,7 +110,7 @@ Resources:
       RouteTableId:
         Ref: labPublicRouteTable
 
-  #Creating an instance security group
+  #Creating a public instance security group
   labPublicInstanceSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -153,7 +150,7 @@ Resources:
       - Key: Name
         Value: labPrivateRouteTable
 
-  #Associate the public subnets with the routing table
+  #Associate the private subnet with the routing table
   labPrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -190,7 +187,7 @@ Resources:
         Ref: labPublicSubnet
 
   #Adding an EC2 instance in the private subnet
-  PrivateInstance:
+  labPrivateInstance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: 
@@ -202,3 +199,24 @@ Resources:
       SubnetId: 
         Ref: labPrivateSubnet
 
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: 
+      Ref: labVPC
+  PublicSubnetId:
+    Description: Public Subnet ID
+    Value: 
+      Ref: labPublicSubnet
+  PrivateSubnetId:
+    Description: Private Subnet ID
+    Value: 
+      Ref: labPrivateSubnet
+  PublicInstanceId:
+    Description: Public EC2 Instance ID
+    Value: 
+      Ref: labPublicInstance
+  PrivateInstanceId:
+    Description: Private EC2 Instance ID
+    Value: 
+      Ref: labPrivateInstance
